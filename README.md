@@ -1,0 +1,2 @@
+# mynd
+AI Second brain
