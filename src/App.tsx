@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './theme.css';
 import { ActivityBar } from './components/ActivityBar';
 import { FileExplorer } from './components/FileExplorer';
@@ -151,6 +151,7 @@ function App() {
           notes={notes}
           activeNoteId={activeNoteId}
           openNoteIds={openNoteIds}
+          currentTheme={theme}
           onSelectNote={handleSelectNote}
           onCloseNoteTab={handleCloseNoteTab}
           onUpdateNoteContent={handleUpdateNoteContent}

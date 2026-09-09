@@ -50,7 +50,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
         justifyContent: 'space-between',
         borderBottom: '1px solid var(--border-subtle)'
       }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', tracking: '0.05em', color: 'var(--text-muted)' }}>
+        <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>
           Vault Explorer
         </span>
         <button
