@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Vite build output
+dist/
+
+# Tauri and Rust build output
+src-tauri/target/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs and debug output
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS-generated files
+.DS_Store
+Thumbs.db
