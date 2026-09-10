@@ -38,6 +38,7 @@ function App() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isDark, setIsDark] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(200);
+  const [folders, setFolders] = useState<string[]>(['Brainstorming', 'Projects', 'Daily Notes']);
   const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
   const [activeNoteId, setActiveNoteId] = useState<string | null>('note-1');
   const [openNoteIds, setOpenNoteIds] = useState<string[]>(['note-1', 'note-2']);
@@ -103,17 +104,45 @@ function App() {
     }
   };
 
-  const handleCreateNote = () => {
+  const handleCreateNote = (title?: string, folder?: string) => {
+    const targetFolder = folder || folders[0] || 'Brainstorming';
+    const noteTitle = title?.trim() || 'Untitled Note';
     const newNote: Note = {
       id: `note-${Date.now()}`,
-      title: 'Untitled Note',
-      folder: 'Brainstorming',
-      content: '# New Note\n\nStart typing...',
+      title: noteTitle,
+      folder: targetFolder,
+      content: `# ${noteTitle}\n\nStart typing...`,
       updatedAt: new Date().toISOString()
     };
     setNotes(prev => [newNote, ...prev]);
     setOpenNoteIds(prev => [...prev, newNote.id]);
     setActiveNoteId(newNote.id);
+  };
+
+  const handleDeleteNote = (id: string) => {
+    setNotes(prev => prev.filter(n => n.id !== id));
+    setOpenNoteIds(prev => prev.filter(t => t !== id));
+    if (activeNoteId === id) {
+      const remaining = openNoteIds.filter(t => t !== id);
+      setActiveNoteId(remaining[remaining.length - 1] || null);
+    }
+  };
+
+  const handleCreateFolder = (folderName: string) => {
+    const name = folderName.trim();
+    if (!name) return;
+    setFolders(prev => prev.includes(name) ? prev : [...prev, name]);
+  };
+
+  const handleDeleteFolder = (folderName: string) => {
+    setFolders(prev => prev.filter(f => f !== folderName));
+    const toDeleteIds = notes.filter(n => n.folder === folderName).map(n => n.id);
+    setNotes(prev => prev.filter(n => n.folder !== folderName));
+    setOpenNoteIds(prev => prev.filter(id => !toDeleteIds.includes(id)));
+    if (activeNoteId && toDeleteIds.includes(activeNoteId)) {
+      const remaining = openNoteIds.filter(id => !toDeleteIds.includes(id));
+      setActiveNoteId(remaining[remaining.length - 1] || null);
+    }
   };
 
   const handleUpdateNoteContent = (id: string, content: string) => {
@@ -176,9 +205,13 @@ function App() {
               <>
                 <FileExplorer
                   notes={notes}
+                  folders={folders}
                   activeNoteId={activeNoteId}
                   onSelectNote={handleSelectNote}
                   onCreateNote={handleCreateNote}
+                  onDeleteNote={handleDeleteNote}
+                  onCreateFolder={handleCreateFolder}
+                  onDeleteFolder={handleDeleteFolder}
                   width={sidebarWidth}
                 />
                 <div

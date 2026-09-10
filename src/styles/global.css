@@ -48,7 +48,6 @@ html, body, #root {
 .codemirror-wrapper .cm-editor {
   height: 100% !important;
   font-family: var(--font-mono);
-  font-size: 12.5px;
   background: var(--bg-base) !important;
 }
 
@@ -57,14 +56,18 @@ html, body, #root {
 }
 
 .codemirror-wrapper .cm-gutters {
-  background: var(--bg-surface) !important;
+  background: var(--bg-base) !important;
   color: var(--text-muted) !important;
   border-right: 1px solid var(--border) !important;
 }
 
-.codemirror-wrapper .cm-activeLine,
+.codemirror-wrapper .cm-activeLine {
+  background: var(--bg-hover) !important;
+}
+
 .codemirror-wrapper .cm-activeLineGutter {
   background: var(--bg-hover) !important;
+  color: var(--text-primary) !important;
 }
 
 /* Markdown preview */

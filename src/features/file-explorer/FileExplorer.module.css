@@ -5,72 +5,217 @@
   flex-direction: column;
   height: 100%;
   user-select: none;
-  min-width: 140px;
-  max-width: 400px;
+  min-width: 160px;
+  max-width: 450px;
+  font-size: 11.5px;
 }
 
+/* Header */
 .header {
-  padding: 8px 10px;
+  padding: 8px 10px 6px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
+  min-height: 32px;
 }
 
 .headerTitle {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Vault / Workspace bar */
+.vaultBar {
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-base);
+}
+
+.vaultTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+
+.countBadge {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 1px 5px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+/* Quick Filter */
+.filterContainer {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.filterInputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  transition: border-color var(--transition-normal);
+}
+
+.filterInputWrapper:focus-within {
+  border-color: var(--border-strong);
+}
+
+.filterIcon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.filterInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 11px;
+  color: var(--text-primary);
+  font-family: inherit;
+  padding: 0;
+}
+
+.filterInput::placeholder {
+  color: var(--text-muted);
+}
+
+.clearFilter {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.clearFilter:hover {
+  color: var(--text-primary);
+}
+
+/* Tree Area */
 .tree {
   flex: 1;
   overflow-y: auto;
   padding: 4px 0;
 }
 
-.folder {
-  padding: 3px 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 8px;
+/* Folder Row */
+.folderGroup {
+  margin-bottom: 2px;
 }
 
-.folder:first-child {
-  margin-top: 0;
+.folder {
+  padding: 5px 10px 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  position: relative;
 }
 
 .folder:hover {
-  color: var(--text-secondary);
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.folderChevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
 }
 
 .folderIcon {
   display: flex;
   align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
+.folderLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folderActions {
+  display: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.folder:hover .folderActions {
+  display: flex;
+}
+
+.folderBadge {
+  font-size: 9.5px;
+  color: var(--text-muted);
+}
+
+/* Notes List with Tree Guide */
 .notesList {
-  padding: 2px 0;
+  padding-left: 18px;
+  position: relative;
 }
 
+.notesList::before {
+  content: '';
+  position: absolute;
+  left: 17px;
+  top: 0;
+  bottom: 4px;
+  width: 1px;
+  background-color: var(--border);
+}
+
+/* Note Item */
 .noteItem {
-  padding: 4px 10px 4px 22px;
+  padding: 4px 8px 4px 10px;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
   color: var(--text-secondary);
   font-size: 11.5px;
+  border-radius: 0;
   transition: all var(--transition-fast);
+  position: relative;
 }
 
 .noteItem:hover {
@@ -81,17 +226,31 @@
 .noteItemActive {
   background-color: var(--bg-active);
   color: var(--text-primary);
+  font-weight: 500;
+}
+
+.noteItemActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 2px;
+  background-color: var(--text-primary);
+  border-radius: 1px;
 }
 
 .noteIcon {
   display: flex;
   align-items: center;
-  opacity: 0.5;
+  color: var(--text-muted);
+  opacity: 0.7;
   flex-shrink: 0;
 }
 
-.noteIconActive {
-  opacity: 0.8;
+.noteItemActive .noteIcon {
+  color: var(--text-primary);
+  opacity: 1;
 }
 
 .noteLabel {
@@ -99,4 +258,50 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.noteActions {
+  display: none;
+  align-items: center;
+}
+
+.noteItem:hover .noteActions {
+  display: flex;
+}
+
+/* Inline Create Inputs */
+.inlineCreateRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 18px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-strong);
+  margin: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.inlineInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: inherit;
+  padding: 1px 0;
+}
+
+.emptyFolder {
+  padding: 4px 12px 4px 14px;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.emptyState {
+  padding: 20px 14px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
 }
