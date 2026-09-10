@@ -25,6 +25,12 @@
   color: var(--text-muted);
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .tree {
   flex: 1;
   overflow-y: auto;
@@ -32,10 +38,10 @@
 }
 
 .folder {
-  padding: 3px 10px;
+  padding: 4px 10px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
   cursor: pointer;
   color: var(--text-muted);
   font-size: 10px;
@@ -53,9 +59,26 @@
   color: var(--text-secondary);
 }
 
+.folderLeft {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .folderIcon {
   display: flex;
   align-items: center;
+}
+
+.folderBadge {
+  font-size: 9px;
+  background: var(--bg-elevated);
+  padding: 1px 5px;
+  border-radius: 8px;
+  color: var(--text-muted);
 }
 
 .notesList {
@@ -63,14 +86,16 @@
 }
 
 .noteItem {
-  padding: 4px 10px 4px 22px;
+  padding: 4px 6px 4px 20px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
   cursor: pointer;
   color: var(--text-secondary);
   font-size: 11.5px;
   transition: all var(--transition-fast);
+  position: relative;
+  group: true;
 }
 
 .noteItem:hover {
@@ -81,6 +106,14 @@
 .noteItemActive {
   background-color: var(--bg-active);
   color: var(--text-primary);
+}
+
+.noteContent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
 .noteIcon {
@@ -99,4 +132,45 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.noteActions {
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.noteItem:hover .noteActions {
+  opacity: 1;
+}
+
+.deleteButton {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.deleteButton:hover {
+  color: #ef5350;
+  background-color: rgba(239, 83, 80, 0.15);
+}
+
+.emptyState {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
