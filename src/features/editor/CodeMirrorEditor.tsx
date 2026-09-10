@@ -1,7 +1,6 @@
 import React from 'react';
 import CodeMirror, { EditorView, scrollPastEnd } from '@uiw/react-codemirror';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 
 interface CodeMirrorEditorProps {
   value: string;
@@ -10,58 +9,65 @@ interface CodeMirrorEditorProps {
   isDark?: boolean;
 }
 
-// VS Code / Obsidian styled theme extension
-const vsObsidianTheme = EditorView.theme({
+// Pure monochromatic Obsidian / VS Code editor styling — NO line separator, NO color themes
+const monoEditorTheme = EditorView.theme({
   '&': {
     height: '100%',
-    fontSize: '13px',
+    fontSize: '12.5px',
     fontFamily: "var(--font-mono, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace)",
+    color: 'var(--text-primary)',
+    backgroundColor: 'var(--bg-base)',
   },
   '.cm-scroller': {
     fontFamily: "var(--font-mono, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace)",
     lineHeight: '1.65',
-    padding: '8px 0 24px 0',
+    padding: '12px 0 32px 0',
   },
   '.cm-content': {
     caretColor: 'var(--text-primary)',
-    padding: '0 16px',
-    maxWidth: '900px',
+    padding: '0 24px 0 8px',
   },
   '.cm-cursor, .cm-dropCursor': {
     borderLeftColor: 'var(--text-primary)',
     borderLeftWidth: '2px',
   },
+  // NO line between line numbers and code editor:
   '.cm-gutters': {
-    backgroundColor: 'transparent',
-    borderRight: '1px solid var(--border)',
-    color: 'var(--text-muted)',
-    paddingRight: '4px',
+    backgroundColor: 'transparent !important',
+    border: 'none !important',
+    borderRight: 'none !important',
+    color: 'var(--text-muted) !important',
+    paddingRight: '6px',
     userSelect: 'none',
   },
   '.cm-lineNumbers .cm-gutterElement': {
-    padding: '0 8px 0 12px',
-    minWidth: '32px',
+    padding: '0 8px 0 14px',
+    minWidth: '28px',
     textAlign: 'right',
+    color: 'var(--text-muted)',
+    fontSize: '11px',
+    opacity: 0.6,
   },
   '.cm-activeLineGutter': {
-    backgroundColor: 'transparent',
-    color: 'var(--text-primary)',
+    backgroundColor: 'transparent !important',
+    color: 'var(--text-primary) !important',
+    opacity: '1 !important',
     fontWeight: '600',
   },
   '.cm-activeLine': {
-    backgroundColor: 'var(--bg-hover)',
+    backgroundColor: 'var(--bg-hover) !important',
   },
   '.cm-selectionMatch': {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'var(--bg-hover)',
     borderRadius: '2px',
   },
   '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
     backgroundColor: 'var(--bg-active) !important',
   },
-  // Obsidian / VS Code markdown heading styles
-  '.cm-header-1': { fontSize: '1.45em', fontWeight: '700', lineHeight: '1.3' },
-  '.cm-header-2': { fontSize: '1.25em', fontWeight: '600', lineHeight: '1.35' },
-  '.cm-header-3': { fontSize: '1.12em', fontWeight: '600', lineHeight: '1.4' },
+  // Monochromatic markdown typography (Obsidian-style)
+  '.cm-header-1': { fontSize: '1.4em', fontWeight: '700', color: 'var(--text-primary)' },
+  '.cm-header-2': { fontSize: '1.22em', fontWeight: '600', color: 'var(--text-primary)' },
+  '.cm-header-3': { fontSize: '1.1em', fontWeight: '600', color: 'var(--text-primary)' },
   '.cm-link': { textDecoration: 'underline', color: 'var(--text-secondary)' },
   '.cm-strong': { fontWeight: '700', color: 'var(--text-primary)' },
   '.cm-emphasis': { fontStyle: 'italic', color: 'var(--text-secondary)' },
@@ -71,10 +77,10 @@ const vsObsidianTheme = EditorView.theme({
     backgroundColor: 'var(--bg-elevated)',
     padding: '1px 4px',
     borderRadius: '3px',
+    color: 'var(--text-primary)',
   },
-  // Fold gutter markers
   '.cm-foldGutter .cm-gutterElement': {
-    padding: '0 4px',
+    padding: '0 2px',
     cursor: 'pointer',
     color: 'var(--text-muted)',
   },
@@ -89,14 +95,11 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   placeholder = 'Start typing note in markdown...',
   isDark = true
 }) => {
-  const baseTheme = isDark ? vscodeDark : vscodeLight;
-
   const extensions = [
     markdown({ base: markdownLanguage }),
-    baseTheme,
-    vsObsidianTheme,
+    monoEditorTheme,
     EditorView.lineWrapping, // Obsidian-style auto word wrap
-    scrollPastEnd(),        // VS Code-style scroll past the end of document
+    scrollPastEnd(),        // VS Code-style scroll past the end
   ];
 
   return (
@@ -104,6 +107,7 @@ export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       <CodeMirror
         value={value}
         height="100%"
+        theme={isDark ? 'dark' : 'light'}
         extensions={extensions}
         onChange={onChange}
         placeholder={placeholder}

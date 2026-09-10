@@ -56,9 +56,10 @@ html, body, #root {
 }
 
 .codemirror-wrapper .cm-gutters {
-  background: var(--bg-base) !important;
+  background: transparent !important;
   color: var(--text-muted) !important;
-  border-right: 1px solid var(--border) !important;
+  border: none !important;
+  border-right: none !important;
 }
 
 .codemirror-wrapper .cm-activeLine {

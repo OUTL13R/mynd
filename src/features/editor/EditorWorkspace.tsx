@@ -38,47 +38,60 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = ({
     .filter((tab): tab is { id: string; label: string } => tab !== null);
 
   const activeNote = notes.find(n => n.id === activeNoteId);
+  const words = activeNote ? activeNote.content.trim().split(/\s+/).filter(Boolean).length : 0;
+  const chars = activeNote ? activeNote.content.length : 0;
 
   return (
     <div className={styles.workspace}>
+      {/* File Tabs with Mode Switcher */}
       <TabBar
         tabs={tabs}
         activeId={activeNoteId || ''}
         onSelect={onSelectNote}
         onClose={onCloseNoteTab}
       >
-        <div className={styles.viewToggle}>
-          <IconButton
-            icon={<Icons.Edit3 />}
-            title="Edit"
-            size="sm"
-            isActive={viewMode === 'edit'}
-            onClick={() => setViewMode('edit')}
-          />
-          <IconButton
-            icon={<Icons.Columns />}
-            title="Split"
-            size="sm"
-            isActive={viewMode === 'split'}
-            onClick={() => setViewMode('split')}
-          />
-          <IconButton
-            icon={<Icons.Eye />}
-            title="Preview"
-            size="sm"
-            isActive={viewMode === 'preview'}
-            onClick={() => setViewMode('preview')}
-          />
-        </div>
+        {activeNote && (
+          <div className={styles.viewToggle}>
+            <IconButton
+              icon={<Icons.Edit3 />}
+              title="Editor only"
+              size="sm"
+              isActive={viewMode === 'edit'}
+              onClick={() => setViewMode('edit')}
+            />
+            <IconButton
+              icon={<Icons.Columns />}
+              title="Split view"
+              size="sm"
+              isActive={viewMode === 'split'}
+              onClick={() => setViewMode('split')}
+            />
+            <IconButton
+              icon={<Icons.Eye />}
+              title="Preview only"
+              size="sm"
+              isActive={viewMode === 'preview'}
+              onClick={() => setViewMode('preview')}
+            />
+          </div>
+        )}
       </TabBar>
 
       {activeNote ? (
-        <div className={styles.content}>
-          <input
-            className={styles.noteTitle}
-            value={activeNote.title}
-            readOnly
-          />
+        <>
+          {/* Breadcrumb Path & Document Stats */}
+          <div className={styles.breadcrumbBar}>
+            <div className={styles.breadcrumbPath}>
+              <span className={styles.breadcrumbFolder}>{activeNote.folder || 'Vault'}</span>
+              <span className={styles.breadcrumbSeparator}>›</span>
+              <span className={styles.breadcrumbFile}>{activeNote.title}</span>
+            </div>
+            <div className={styles.breadcrumbStats}>
+              {words} words · {chars} chars
+            </div>
+          </div>
+
+          {/* Full-bleed Editor Panes */}
           <div className={styles.panes}>
             {(viewMode === 'edit' || viewMode === 'split') && (
               <div className={`${styles.pane} ${viewMode === 'split' ? styles.paneDivider : ''}`}>
@@ -95,11 +108,12 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = ({
               </div>
             )}
           </div>
-        </div>
+        </>
       ) : (
         <div className={styles.emptyState}>
           <Icons.FileText />
-          <div className={styles.emptyText}>Select or create a note</div>
+          <div className={styles.emptyText}>No note open</div>
+          <div className={styles.emptyHint}>Select a note from the sidebar or create a new one</div>
         </div>
       )}
     </div>

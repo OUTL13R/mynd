@@ -7,30 +7,53 @@
   overflow: hidden;
 }
 
-.content {
-  flex: 1;
+/* Breadcrumb bar under tabs */
+.breadcrumbBar {
   display: flex;
-  flex-direction: column;
-  padding: 12px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  min-height: 26px;
+}
+
+.breadcrumbPath {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.noteTitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  background: transparent;
-  border: none;
-  outline: none;
-  font-family: inherit;
-  margin-bottom: 8px;
-  width: 100%;
+.breadcrumbFolder {
+  color: var(--text-muted);
 }
 
+.breadcrumbSeparator {
+  opacity: 0.5;
+}
+
+.breadcrumbFile {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.breadcrumbStats {
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+/* Panes container fills remaining space seamlessly */
 .panes {
   flex: 1;
   display: flex;
-  gap: 12px;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -44,9 +67,9 @@
 
 .paneDivider {
   border-right: 1px solid var(--border);
-  padding-right: 12px;
 }
 
+/* Empty workspace state */
 .emptyState {
   flex: 1;
   display: flex;
@@ -54,19 +77,27 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
+  gap: 8px;
 }
 
 .emptyText {
-  margin-top: 8px;
-  font-size: 11px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
+.emptyHint {
+  font-size: 11px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* View toggle in tab bar */
 .viewToggle {
   display: flex;
   align-items: center;
   gap: 1px;
   background-color: var(--bg-elevated);
-  padding: 2px;
+  padding: 1px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
