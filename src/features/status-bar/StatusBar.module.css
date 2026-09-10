@@ -1,0 +1,24 @@
+.statusBar {
+  height: 22px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 10px;
+  color: var(--text-muted);
+  user-select: none;
+  z-index: 20;
+}
+
+.left, .right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.noteTitle {
+  font-weight: 600;
+  color: var(--text-secondary);
+}

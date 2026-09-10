@@ -1,0 +1,82 @@
+.aiView {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--bg-base);
+}
+
+.header {
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-surface);
+  min-height: 30px;
+}
+
+.headerTitle {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.headerIcon {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.message {
+  max-width: 85%;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.messageUser {
+  align-self: flex-end;
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.messageAgent {
+  align-self: flex-start;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.thinking {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.inputArea {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background-color: var(--bg-surface);
+}
+
+.inputContainer {
+  max-width: 680px;
+  margin: 0 auto;
+}

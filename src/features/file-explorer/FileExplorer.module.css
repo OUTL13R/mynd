@@ -1,0 +1,102 @@
+.explorer {
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  user-select: none;
+  min-width: 140px;
+  max-width: 400px;
+}
+
+.header {
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.headerTitle {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.folder {
+  padding: 3px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 8px;
+}
+
+.folder:first-child {
+  margin-top: 0;
+}
+
+.folder:hover {
+  color: var(--text-secondary);
+}
+
+.folderIcon {
+  display: flex;
+  align-items: center;
+}
+
+.notesList {
+  padding: 2px 0;
+}
+
+.noteItem {
+  padding: 4px 10px 4px 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  transition: all var(--transition-fast);
+}
+
+.noteItem:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.noteItemActive {
+  background-color: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.noteIcon {
+  display: flex;
+  align-items: center;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.noteIconActive {
+  opacity: 0.8;
+}
+
+.noteLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

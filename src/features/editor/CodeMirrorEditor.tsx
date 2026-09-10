@@ -1,35 +1,30 @@
 import React from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { oneDark } from '@codemirror/theme-one-dark';
-import { Theme } from './types';
 
 interface CodeMirrorEditorProps {
   value: string;
   onChange: (val: string) => void;
-  theme: Theme;
   placeholder?: string;
+  isDark?: boolean;
 }
 
 export const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
-  theme,
-  placeholder = 'Start typing markdown...'
+  placeholder = 'Start typing...',
+  isDark = true
 }) => {
   const extensions = [
-    markdown({ base: markdownLanguage })
+    markdown({ base: markdownLanguage }),
   ];
-
-  // Select extension theme if applicable
-  const themeExtension = theme !== 'minimal-light' ? [oneDark] : [];
 
   return (
     <div className="codemirror-wrapper">
       <CodeMirror
         value={value}
         height="100%"
-        theme={themeExtension}
+        theme={isDark ? 'dark' : 'light'}
         extensions={extensions}
         onChange={onChange}
         placeholder={placeholder}

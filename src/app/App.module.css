@@ -1,0 +1,27 @@
+.shell {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.resizeHandle {
+  width: 3px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background var(--transition-normal);
+  flex-shrink: 0;
+  z-index: 15;
+}
+
+.resizeHandle:hover,
+.resizeHandle:active {
+  background: var(--border-strong);
+}
