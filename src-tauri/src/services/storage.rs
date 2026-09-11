@@ -19,71 +19,158 @@ impl StorageService {
         };
 
         if !dir.exists() {
-            fs::create_dir_all(&dir).map_err(|e| format!("Failed to create notes directory: {}", e))?;
+            fs::create_dir_all(&dir)
+                .map_err(|e| format!("Failed to create notes directory: {}", e))?;
         }
-
-        // Seed initial notes if directory is freshly created or empty
-        Self::seed_initial_notes_if_empty(&dir)?;
 
         Ok(dir)
     }
 
-    /// Seeds default starter notes if no markdown files exist yet in the notes directory.
-    fn seed_initial_notes_if_empty(notes_dir: &Path) -> Result<(), String> {
-        let has_files = Self::has_any_markdown_files(notes_dir);
-        if has_files {
-            return Ok(());
+    /// Resolves the directory for a specific vault.
+    pub fn get_vault_dir(app: &tauri::AppHandle, vault_name: &str) -> Result<PathBuf, String> {
+        let root = Self::get_notes_dir(app)?;
+        let safe_vault = Self::sanitize_filename(vault_name.trim());
+        let vault_dir = root.join(safe_vault);
+        if !vault_dir.exists() {
+            fs::create_dir_all(&vault_dir)
+                .map_err(|e| format!("Failed to create vault directory {:?}: {}", vault_dir, e))?;
+        }
+        Ok(vault_dir)
+    }
+
+    /// Creates a vault directory if it does not yet exist.
+    pub fn create_vault(app: &tauri::AppHandle, vault_name: &str) -> Result<String, String> {
+        let normalized = vault_name.trim();
+        if normalized.is_empty() {
+            return Err("Vault name cannot be empty".to_string());
         }
 
-        let default_notes = vec![
-            Note {
-                id: "note-1".to_string(),
-                title: "Welcome to Mynd".to_string(),
-                folder: "Brainstorming".to_string(),
-                content: "# Welcome to Mynd\n\nMynd is your **AI-first Second Brain** — a minimalist note-taking app with an embedded AI assistant.\n\n### Features\n- Minimalist & fast\n- Embedded AI assistant\n- Markdown editing with live preview\n- Auto-saved directly to your system disk as standard Markdown!\n\nSwitch to the AI tab to start a conversation or create a new note in the Explorer.".to_string(),
-                updated_at: "2026-09-09T10:00:00.000Z".to_string(),
-                created_at: Some("2026-09-09T10:00:00.000Z".to_string()),
-            },
-            Note {
-                id: "note-2".to_string(),
-                title: "AI Agent Architecture".to_string(),
-                folder: "Projects".to_string(),
-                content: "# AI Agent Architecture\n\n- Multi-modal local LLM pipeline\n- Vector search for markdown files\n- Autonomous goal-seeking workflows\n- Direct disk synchronization with Tauri 2 IPC".to_string(),
-                updated_at: "2026-09-09T11:00:00.000Z".to_string(),
-                created_at: Some("2026-09-09T11:00:00.000Z".to_string()),
-            },
-            Note {
-                id: "note-3".to_string(),
-                title: "Daily Log - 2026-09-09".to_string(),
-                folder: "Daily Notes".to_string(),
-                content: "# Daily Log\n\n- [x] Initialized Mynd Tauri + React setup\n- [x] Implemented core UI layout\n- [x] Structured production-grade Rust backend\n- [x] Implemented disk-persisted CRUD operations".to_string(),
-                updated_at: "2026-09-09T12:00:00.000Z".to_string(),
-                created_at: Some("2026-09-09T12:00:00.000Z".to_string()),
-            },
-        ];
+        let vault_path = Self::get_vault_dir(app, normalized)?;
+        Ok(vault_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(normalized)
+            .to_string())
+    }
 
-        for note in default_notes {
-            Self::write_note_to_disk(notes_dir, &note)?;
+    /// Renames an existing vault directory and updates notes frontmatter inside it.
+    pub fn rename_vault(
+        app: &tauri::AppHandle,
+        old_name: &str,
+        new_name: &str,
+    ) -> Result<String, String> {
+        let old_trimmed = old_name.trim();
+        let new_trimmed = new_name.trim();
+
+        if new_trimmed.is_empty() {
+            return Err("Vault name cannot be empty".to_string());
+        }
+
+        let old_clean = Self::sanitize_filename(old_trimmed);
+        let new_clean = Self::sanitize_filename(new_trimmed);
+
+        let notes_dir = Self::get_notes_dir(app)?;
+        let old_dir = notes_dir.join(&old_clean);
+        let new_dir = notes_dir.join(&new_clean);
+
+        if old_clean == new_clean {
+            if !new_dir.exists() {
+                fs::create_dir_all(&new_dir)
+                    .map_err(|e| format!("Failed to create vault directory: {}", e))?;
+            }
+            return Ok(new_clean);
+        }
+
+        if new_dir.exists() && !old_clean.eq_ignore_ascii_case(&new_clean) {
+            return Err(format!("A vault named '{}' already exists", new_clean));
+        }
+
+        if old_dir.exists() {
+            fs::rename(&old_dir, &new_dir)
+                .map_err(|e| format!("Failed to rename vault directory from '{}' to '{}': {}", old_clean, new_clean, e))?;
+        } else {
+            fs::create_dir_all(&new_dir)
+                .map_err(|e| format!("Failed to create vault directory: {}", e))?;
+        }
+
+        // Update frontmatter in all notes inside the renamed vault directory
+        Self::update_vault_frontmatter_in_dir(&new_dir, &new_clean)?;
+
+        Ok(new_clean)
+    }
+
+    /// Deletes a vault directory and all notes inside it from disk.
+    pub fn delete_vault(app: &tauri::AppHandle, vault_name: &str) -> Result<(), String> {
+        let trimmed = vault_name.trim();
+        if trimmed.is_empty() {
+            return Err("Vault name cannot be empty".to_string());
+        }
+
+        let clean = Self::sanitize_filename(trimmed);
+        let notes_dir = Self::get_notes_dir(app)?;
+        let vault_dir = notes_dir.join(&clean);
+
+        if vault_dir.exists() {
+            fs::remove_dir_all(&vault_dir)
+                .map_err(|e| format!("Failed to delete vault directory '{}': {}", clean, e))?;
+        }
+
+        // Also check if any notes with vault == vault_name exist directly in notes_dir
+        if let Ok(entries) = fs::read_dir(&notes_dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("md") {
+                    if let Ok(content) = fs::read_to_string(&path) {
+                        let parsed = Note::from_markdown(&content, "id", "title", "General", "Main Vault", "0");
+                        if parsed.vault.trim().eq_ignore_ascii_case(trimmed) {
+                            let _ = fs::remove_file(&path);
+                        }
+                    }
+                }
+            }
         }
 
         Ok(())
     }
 
-    /// Checks if any .md file exists anywhere in the directory hierarchy
-    fn has_any_markdown_files(dir: &Path) -> bool {
-        if let Ok(entries) = fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    if Self::has_any_markdown_files(&path) {
-                        return true;
-                    }
-                } else if path.extension().and_then(|ext| ext.to_str()) == Some("md") {
-                    return true;
+    /// Recursively updates the frontmatter of notes in a directory to the new vault name
+    fn update_vault_frontmatter_in_dir(dir: &Path, new_vault_name: &str) -> Result<(), String> {
+        if !dir.exists() {
+            return Ok(());
+        }
+
+        let entries = fs::read_dir(dir)
+            .map_err(|e| format!("Failed to read directory {:?}: {}", dir, e))?;
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                Self::update_vault_frontmatter_in_dir(&path, new_vault_name)?;
+            } else if path.extension().and_then(|ext| ext.to_str()) == Some("md") {
+                if let Ok(content) = fs::read_to_string(&path) {
+                    let fallback_title = path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("Untitled")
+                        .to_string();
+                    let fallback_id =
+                        format!("note-{}", fallback_title.replace(' ', "-").to_lowercase());
+                    let mut note = Note::from_markdown(
+                        &content,
+                        &fallback_id,
+                        &fallback_title,
+                        "General",
+                        new_vault_name,
+                        "0",
+                    );
+                    note.vault = new_vault_name.to_string();
+                    let updated_md = note.to_markdown();
+                    let _ = fs::write(&path, updated_md);
                 }
             }
         }
-        false
+
+        Ok(())
     }
 
     /// Recursively scans notes_dir and loads all .md notes
@@ -96,6 +183,36 @@ impl StorageService {
         notes.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
 
         Ok(notes)
+    }
+
+    /// Lists the available vaults under the notes root.
+    pub fn list_vaults(app: &tauri::AppHandle) -> Result<Vec<String>, String> {
+        let notes_dir = Self::get_notes_dir(app)?;
+        let mut vaults = Vec::new();
+
+        if !notes_dir.exists() {
+            return Ok(vaults);
+        }
+
+        for entry in fs::read_dir(&notes_dir)
+            .map_err(|e| format!("Failed to read vault directory {:?}: {}", notes_dir, e))?
+        {
+            let entry = entry.map_err(|e| format!("Failed to read vault entry: {}", e))?;
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("Untitled")
+                    .to_string();
+                if !name.is_empty() && !vaults.contains(&name) {
+                    vaults.push(name);
+                }
+            }
+        }
+
+        vaults.sort();
+        Ok(vaults)
     }
 
     /// Scans a directory recursively to read markdown files into Note objects
@@ -119,23 +236,28 @@ impl StorageService {
                         .unwrap_or("Untitled")
                         .to_string();
 
-                    // Derive folder name from relative path or parent folder
-                    let fallback_folder = if let Ok(rel) = path.strip_prefix(root_dir) {
-                        if let Some(parent) = rel.parent() {
-                            let parent_str = parent.to_string_lossy().to_string();
-                            if parent_str.is_empty() {
-                                "General".to_string()
-                            } else {
-                                parent_str.replace('\\', "/")
-                            }
+                    // Derive vault and folder name from relative path components
+                    let (fallback_vault, fallback_folder) = if let Ok(rel) = path.strip_prefix(root_dir) {
+                        let comps: Vec<String> = rel
+                            .components()
+                            .map(|c| c.as_os_str().to_string_lossy().to_string())
+                            .collect();
+                        if comps.len() >= 3 {
+                            let vault = comps[0].clone();
+                            let folder = comps[1..comps.len() - 1].join("/");
+                            (vault, folder)
+                        } else if comps.len() == 2 {
+                            let vault = comps[0].clone();
+                            (vault.clone(), vault)
                         } else {
-                            "General".to_string()
+                            ("Main Vault".to_string(), "Main Vault".to_string())
                         }
                     } else {
-                        "General".to_string()
+                        ("Main Vault".to_string(), "Main Vault".to_string())
                     };
 
-                    let fallback_id = format!("note-{}", fallback_title.replace(' ', "-").to_lowercase());
+                    let fallback_id =
+                        format!("note-{}", fallback_title.replace(' ', "-").to_lowercase());
                     let fallback_time = entry
                         .metadata()
                         .ok()
@@ -151,6 +273,7 @@ impl StorageService {
                         &fallback_id,
                         &fallback_title,
                         &fallback_folder,
+                        &fallback_vault,
                         &fallback_time,
                     );
                     notes.push(note);
@@ -179,20 +302,38 @@ impl StorageService {
 
     /// Resolves target file path for a note given its folder and title
     fn get_target_file_path(notes_dir: &Path, note: &Note) -> PathBuf {
-        let folder_part = if note.folder.trim().is_empty() {
-            "General"
-        } else {
-            note.folder.trim()
-        };
-
-        let safe_folder = Self::sanitize_filename(folder_part);
+        let vault_dir = Self::get_vault_dir_for_note(notes_dir, &note.vault);
+        let folder_part = note.folder.trim();
         let safe_title = Self::sanitize_filename(&note.title);
 
-        notes_dir.join(safe_folder).join(format!("{}.md", safe_title))
+        if folder_part.is_empty()
+            || folder_part.eq_ignore_ascii_case(note.vault.trim())
+            || folder_part.eq_ignore_ascii_case("Brainstorming")
+            || folder_part.eq_ignore_ascii_case("General")
+        {
+            vault_dir.join(format!("{}.md", safe_title))
+        } else {
+            let safe_folder = Self::sanitize_filename(folder_part);
+            vault_dir.join(safe_folder).join(format!("{}.md", safe_title))
+        }
+    }
+
+    fn get_vault_dir_for_note(root_dir: &Path, vault_name: &str) -> PathBuf {
+        let trimmed = vault_name.trim();
+        if trimmed.is_empty() {
+            root_dir.to_path_buf()
+        } else {
+            let safe_vault = Self::sanitize_filename(trimmed);
+            root_dir.join(&safe_vault)
+        }
     }
 
     /// Finds any existing disk file containing the specified note ID
-    fn find_existing_file_by_id(root_dir: &Path, current_dir: &Path, note_id: &str) -> Option<PathBuf> {
+    fn find_existing_file_by_id(
+        root_dir: &Path,
+        current_dir: &Path,
+        note_id: &str,
+    ) -> Option<PathBuf> {
         let entries = fs::read_dir(current_dir).ok()?;
         for entry in entries.flatten() {
             let path = entry.path();
@@ -207,7 +348,9 @@ impl StorageService {
                             let fm = &content[4..4 + closing];
                             for line in fm.lines() {
                                 if let Some((k, v)) = line.split_once(':') {
-                                    if k.trim() == "id" && v.trim().trim_matches('"').trim_matches('\'') == note_id {
+                                    if k.trim() == "id"
+                                        && v.trim().trim_matches('"').trim_matches('\'') == note_id
+                                    {
                                         return Some(path);
                                     }
                                 }
@@ -224,9 +367,18 @@ impl StorageService {
     pub fn save_note(app: &tauri::AppHandle, note: Note) -> Result<Note, String> {
         let notes_dir = Self::get_notes_dir(app)?;
 
+        let normalized_note = Note {
+            vault: if note.vault.trim().is_empty() {
+                "Main Vault".to_string()
+            } else {
+                note.vault.trim().to_string()
+            },
+            ..note
+        };
+
         // Find if an existing file for this ID exists (may have an old title or folder)
-        let old_file = Self::find_existing_file_by_id(&notes_dir, &notes_dir, &note.id);
-        let target_file = Self::get_target_file_path(&notes_dir, &note);
+        let old_file = Self::find_existing_file_by_id(&notes_dir, &notes_dir, &normalized_note.id);
+        let target_file = Self::get_target_file_path(&notes_dir, &normalized_note);
 
         if let Some(old_path) = old_file {
             if old_path != target_file && old_path.exists() {
@@ -240,16 +392,9 @@ impl StorageService {
             }
         }
 
-        Self::write_note_to_path(&target_file, &note)?;
+        Self::write_note_to_path(&target_file, &normalized_note)?;
 
-        Ok(note)
-    }
-
-    /// Writes a note to disk at the standard location
-    fn write_note_to_disk(notes_dir: &Path, note: &Note) -> Result<PathBuf, String> {
-        let target_file = Self::get_target_file_path(notes_dir, note);
-        Self::write_note_to_path(&target_file, note)?;
-        Ok(target_file)
+        Ok(normalized_note)
     }
 
     /// Writes markdown content to a specific path, creating parent directories if needed
@@ -282,7 +427,8 @@ impl StorageService {
             }
             Ok(())
         } else {
-            Err(format!("Note with id '{}' was not found on disk", id))
+            // Note already does not exist on disk, treat as success (idempotent)
+            Ok(())
         }
     }
 
@@ -321,3 +467,57 @@ impl StorageService {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_sanitize_filename() {
+        assert_eq!(
+            StorageService::sanitize_filename("  My Vault / Notes?  "),
+            "My Vault - Notes-"
+        );
+        assert_eq!(StorageService::sanitize_filename(""), "Untitled");
+        assert_eq!(StorageService::sanitize_filename("   "), "Untitled");
+        assert_eq!(
+            StorageService::sanitize_filename("Vault: 2026*"),
+            "Vault- 2026-"
+        );
+    }
+
+    #[test]
+    fn test_update_vault_frontmatter_in_dir() {
+        let temp_dir = std::env::temp_dir().join(format!(
+            "mynd_test_vault_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+        ));
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let note = Note {
+            id: "test-v-1".to_string(),
+            title: "Testing Vault".to_string(),
+            folder: "General".to_string(),
+            vault: "Old Vault".to_string(),
+            content: "Some content".to_string(),
+            updated_at: "2026-09-11T12:00:00Z".to_string(),
+            created_at: Some("2026-09-11T12:00:00Z".to_string()),
+        };
+
+        let note_path = temp_dir.join("test.md");
+        fs::write(&note_path, note.to_markdown()).unwrap();
+
+        StorageService::update_vault_frontmatter_in_dir(&temp_dir, "New Vault Name").unwrap();
+
+        let updated_content = fs::read_to_string(&note_path).unwrap();
+        let parsed = Note::from_markdown(&updated_content, "id", "title", "folder", "default", "0");
+        assert_eq!(parsed.vault, "New Vault Name");
+        assert_eq!(parsed.title, "Testing Vault");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+}
+

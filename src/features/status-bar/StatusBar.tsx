@@ -62,8 +62,6 @@ export const StatusBar: React.FC<StatusBarProps> = ({ agentStatus = 'idle' }) =>
         <div className={styles.divider} />
         <span>{wordCount} words</span>
         <span>{lineCount} lines</span>
-        <div className={styles.divider} />
-        <span>UTF-8</span>
       </div>
     </div>
   );

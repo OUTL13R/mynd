@@ -9,6 +9,26 @@ pub fn get_notes(app: AppHandle) -> Result<Vec<Note>, String> {
 }
 
 #[tauri::command]
+pub fn get_vaults(app: AppHandle) -> Result<Vec<String>, String> {
+    StorageService::list_vaults(&app)
+}
+
+#[tauri::command]
+pub fn create_vault(app: AppHandle, vault_name: String) -> Result<String, String> {
+    StorageService::create_vault(&app, &vault_name)
+}
+
+#[tauri::command]
+pub fn rename_vault(app: AppHandle, old_name: String, new_name: String) -> Result<String, String> {
+    StorageService::rename_vault(&app, &old_name, &new_name)
+}
+
+#[tauri::command]
+pub fn delete_vault(app: AppHandle, vault_name: String) -> Result<(), String> {
+    StorageService::delete_vault(&app, &vault_name)
+}
+
+#[tauri::command]
 pub fn get_note(app: AppHandle, id: String) -> Result<Note, String> {
     let notes = StorageService::list_notes(&app)?;
     notes

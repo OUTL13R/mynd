@@ -5,11 +5,17 @@ pub struct Note {
     pub id: String,
     pub title: String,
     pub folder: String,
+    #[serde(default = "default_vault")]
+    pub vault: String,
     pub content: String,
     #[serde(rename = "updatedAt")]
     pub updated_at: String,
     #[serde(rename = "createdAt", default)]
     pub created_at: Option<String>,
+}
+
+fn default_vault() -> String {
+    "Main Vault".to_string()
 }
 
 impl Note {
@@ -18,10 +24,17 @@ impl Note {
         let created = self.created_at.as_deref().unwrap_or(&self.updated_at);
         let safe_title = self.title.replace('"', "\\\"");
         let safe_folder = self.folder.replace('"', "\\\"");
+        let safe_vault = self.vault.replace('"', "\\\"");
 
         format!(
-            "---\nid: {}\ntitle: \"{}\"\nfolder: \"{}\"\ncreatedAt: {}\nupdatedAt: {}\n---\n{}",
-            self.id, safe_title, safe_folder, created, self.updated_at, self.content
+            "---\nid: {}\ntitle: \"{}\"\nfolder: \"{}\"\nvault: \"{}\"\ncreatedAt: {}\nupdatedAt: {}\n---\n{}",
+            self.id,
+            safe_title,
+            safe_folder,
+            safe_vault,
+            created,
+            self.updated_at,
+            self.content
         )
     }
 
@@ -31,6 +44,7 @@ impl Note {
         fallback_id: &str,
         fallback_title: &str,
         fallback_folder: &str,
+        fallback_vault: &str,
         fallback_time: &str,
     ) -> Self {
         let normalized = raw_text.replace("\r\n", "\n");
@@ -43,6 +57,7 @@ impl Note {
                 let mut id = fallback_id.to_string();
                 let mut title = fallback_title.to_string();
                 let mut folder = fallback_folder.to_string();
+                let mut vault = fallback_vault.to_string();
                 let mut created_at: Option<String> = None;
                 let mut updated_at = fallback_time.to_string();
 
@@ -66,6 +81,11 @@ impl Note {
                             "folder" => {
                                 folder = val.to_string();
                             }
+                            "vault" => {
+                                if !val.is_empty() {
+                                    vault = val.to_string();
+                                }
+                            }
                             "createdAt" => {
                                 if !val.is_empty() {
                                     created_at = Some(val.to_string());
@@ -85,6 +105,7 @@ impl Note {
                     id,
                     title,
                     folder,
+                    vault,
                     content: body.to_string(),
                     updated_at,
                     created_at,
@@ -97,6 +118,7 @@ impl Note {
             id: fallback_id.to_string(),
             title: fallback_title.to_string(),
             folder: fallback_folder.to_string(),
+            vault: fallback_vault.to_string(),
             content: raw_text.to_string(),
             updated_at: fallback_time.to_string(),
             created_at: Some(fallback_time.to_string()),
@@ -114,17 +136,26 @@ mod tests {
             id: "test-note-123".to_string(),
             title: "Project Architecture & Design".to_string(),
             folder: "Engineering".to_string(),
+            vault: "Main Vault".to_string(),
             content: "# Heading\n\nThis is a test note body with markdown content.".to_string(),
             updated_at: "2026-09-10T12:00:00.000Z".to_string(),
             created_at: Some("2026-09-09T10:00:00.000Z".to_string()),
         };
 
         let md = original.to_markdown();
-        let parsed = Note::from_markdown(&md, "fb-id", "fb-title", "fb-folder", "fb-time");
+        let parsed = Note::from_markdown(
+            &md,
+            "fb-id",
+            "fb-title",
+            "fb-folder",
+            "Main Vault",
+            "fb-time",
+        );
 
         assert_eq!(parsed.id, original.id);
         assert_eq!(parsed.title, original.title);
         assert_eq!(parsed.folder, original.folder);
+        assert_eq!(parsed.vault, original.vault);
         assert_eq!(parsed.content, original.content);
         assert_eq!(parsed.updated_at, original.updated_at);
         assert_eq!(parsed.created_at, original.created_at);
@@ -133,11 +164,19 @@ mod tests {
     #[test]
     fn test_parse_plain_markdown_without_frontmatter() {
         let raw = "# Just Plain Markdown\n\nNo frontmatter delimiters here.";
-        let parsed = Note::from_markdown(raw, "note-fallback", "Fallback Title", "Notes", "12345");
+        let parsed = Note::from_markdown(
+            raw,
+            "note-fallback",
+            "Fallback Title",
+            "Notes",
+            "Main Vault",
+            "12345",
+        );
 
         assert_eq!(parsed.id, "note-fallback");
         assert_eq!(parsed.title, "Fallback Title");
         assert_eq!(parsed.folder, "Notes");
+        assert_eq!(parsed.vault, "Main Vault");
         assert_eq!(parsed.content, raw);
         assert_eq!(parsed.updated_at, "12345");
     }

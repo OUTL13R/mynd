@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { TabBar } from '../../components/TabBar/TabBar';
 import { Icons } from '../../components/Icons';
 import { IconButton } from '../../components/IconButton/IconButton';
@@ -21,33 +21,10 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = ({ isDark = true 
     selectNote,
     closeNoteTab,
     updateNoteContent,
-    updateNoteTitle,
-    createNote
+    createNote,
   } = useNotes();
 
   const [viewMode, setViewMode] = useState<ViewMode>('split');
-  const [titleInput, setTitleInput] = useState('');
-
-  // Sync title input when active note changes
-  useEffect(() => {
-    if (activeNote) {
-      setTitleInput(activeNote.title);
-    } else {
-      setTitleInput('');
-    }
-  }, [activeNote?.id, activeNote?.title]);
-
-  const handleTitleBlur = () => {
-    if (activeNote && titleInput.trim() && titleInput !== activeNote.title) {
-      updateNoteTitle(activeNote.id, titleInput.trim());
-    }
-  };
-
-  const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.currentTarget.blur();
-    }
-  };
 
   const tabs = openNoteIds
     .map(id => {
@@ -93,21 +70,6 @@ export const EditorWorkspace: React.FC<EditorWorkspaceProps> = ({ isDark = true 
 
       {activeNote ? (
         <div className={styles.content}>
-          <div className={styles.titleRow}>
-            <div className={styles.titleContainer}>
-              <span className={styles.folderTag}>{activeNote.folder || 'General'}</span>
-              <input
-                className={styles.noteTitle}
-                value={titleInput}
-                onChange={(e) => setTitleInput(e.target.value)}
-                onBlur={handleTitleBlur}
-                onKeyDown={handleTitleKeyDown}
-                placeholder="Note title..."
-                title="Click to edit title"
-              />
-            </div>
-          </div>
-
           <div className={styles.panes}>
             {(viewMode === 'edit' || viewMode === 'split') && (
               <div className={`${styles.pane} ${viewMode === 'split' ? styles.paneDivider : ''}`}>

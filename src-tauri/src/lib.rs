@@ -15,6 +15,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             commands::notes::get_notes,
+            commands::notes::get_vaults,
+            commands::notes::create_vault,
+            commands::notes::rename_vault,
+            commands::notes::delete_vault,
             commands::notes::get_note,
             commands::notes::create_note,
             commands::notes::save_note,

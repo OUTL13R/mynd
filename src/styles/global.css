@@ -72,10 +72,14 @@ html, body, #root {
   flex: 1;
   height: 100%;
   overflow-y: auto;
-  padding: 12px 20px;
+  padding: 4px 16px;
   color: var(--text-primary);
   line-height: 1.6;
   font-size: 13px;
+}
+
+.markdown-preview-container > :first-child {
+  margin-top: 0 !important;
 }
 
 .markdown-preview-container h1,
@@ -84,7 +88,7 @@ html, body, #root {
 .markdown-preview-container h4,
 .markdown-preview-container h5,
 .markdown-preview-container h6 {
-  margin-top: 1.5em;
+  margin-top: 1.2em;
   margin-bottom: 0.5em;
   font-weight: 600;
   line-height: 1.25;
