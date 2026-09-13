@@ -1,0 +1,72 @@
+.statusBar {
+  height: 24px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  user-select: none;
+  z-index: 20;
+}
+
+.left, .right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.noteTitle {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.saveIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.saveSaved {
+  color: #4caf50;
+}
+
+.saveSaving {
+  color: #ff9800;
+  animation: pulse 1s infinite alternate;
+}
+
+.saveError {
+  color: #f44336;
+}
+
+.clickablePath {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+
+.clickablePath:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.divider {
+  width: 1px;
+  height: 12px;
+  background: var(--border);
+}
+
+@keyframes pulse {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}

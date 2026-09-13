@@ -1,0 +1,54 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  height: 100%;
+  user-select: none;
+  z-index: 5;
+}
+
+.panelFloating {
+  position: absolute;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+}
+
+.header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: default;
+}
+
+.headerDraggable {
+  cursor: grab;
+}
+
+.headerDraggable:active {
+  cursor: grabbing;
+}
+
+.title {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.grip {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+}
