@@ -62,9 +62,54 @@ html, body, #root {
   border-right: 1px solid var(--border) !important;
 }
 
-.codemirror-wrapper .cm-activeLine,
+.codemirror-wrapper .cm-activeLine {
+  background: transparent !important;
+}
+
 .codemirror-wrapper .cm-activeLineGutter {
   background: var(--bg-hover) !important;
+}
+
+.codemirror-wrapper .cm-scroller {
+  overflow-x: hidden !important;
+}
+
+.codemirror-wrapper .cm-content {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+.codemirror-wrapper .cm-line {
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Explicit high-visibility selection highlight for selected text or single character */
+.codemirror-wrapper .cm-selectionLayer {
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+
+.codemirror-wrapper .cm-selectionBackground,
+.codemirror-wrapper.cm-focused .cm-selectionBackground {
+  background-color: rgba(59, 130, 246, 0.45) !important;
+  opacity: 1 !important;
+  border-radius: 2px;
+}
+
+.codemirror-wrapper ::selection,
+.codemirror-wrapper .cm-content ::selection,
+.codemirror-wrapper .cm-line ::selection {
+  background-color: rgba(59, 130, 246, 0.45) !important;
+  color: inherit !important;
+}
+
+/* Selection match highlight */
+.codemirror-wrapper .cm-selectionMatch {
+  background-color: rgba(234, 179, 8, 0.35) !important;
+  outline: 1px solid rgba(234, 179, 8, 0.65) !important;
+  border-radius: 2px;
 }
 
 /* Markdown preview */
