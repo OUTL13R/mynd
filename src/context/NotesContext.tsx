@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useDebouncedCallback } from "../hooks/useDebounce";
-import { notesService } from "../services/notesService";
+import { notesService, isTauri } from "../services/notesService";
 import { syncWorker } from "../services/syncWorker";
 import { Note, SaveStatus } from "../types";
 
@@ -176,6 +176,26 @@ export const NotesProvider: React.FC<{ children: ReactNode }> = ({
     });
     return unsubscribe;
   }, []);
+
+  // Listen for real-time filesystem watcher updates from Rust backend
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    if (isTauri()) {
+      import('@tauri-apps/api/event').then(({ listen }) => {
+        listen<{ path: string; action: string; noteId?: string }>('notes:disk-change', async (event) => {
+          const { path, action, noteId } = event.payload;
+          console.debug('[Mynd Watcher Event]', action, path, noteId);
+          // If active note is clean and changed externally, or if files were added/removed/renamed, refresh
+          await loadNotesFromDisk();
+        }).then((u) => {
+          unlisten = u;
+        });
+      });
+    }
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [loadNotesFromDisk]);
 
   // Debounced queue enqueue for content typing
   const [debouncedSaveToDisk] = useDebouncedCallback(

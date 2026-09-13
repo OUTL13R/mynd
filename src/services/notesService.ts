@@ -1,5 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
-import { Note } from "../types";
+import {
+  Note,
+  SearchHighlight,
+  SearchResponse,
+  SearchResult,
+  SearchSnippet,
+  IndexStats,
+  RebuildSummary,
+} from "../types";
 
 export const isTauri = (): boolean => {
   return (
@@ -316,5 +324,142 @@ export const notesService = {
         console.error("Failed to open notes directory in file explorer:", err);
       }
     }
+  },
+
+  /**
+   * Searches notes using SQLite full-text search (FTS5) and title substring matching.
+   * Gracefully falls back to in-memory client search in browser mode.
+   */
+  async searchNotes(
+    query: string,
+    vault?: string,
+    limit: number = 30,
+    offset: number = 0,
+  ): Promise<SearchResponse> {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      return { results: [], total: 0, tookMs: 0 };
+    }
+
+    if (isTauri()) {
+      try {
+        return await invoke<SearchResponse>("search_notes", {
+          query: trimmed,
+          vault: vault && vault.trim() ? vault.trim() : null,
+          limit,
+          offset,
+        });
+      } catch (err) {
+        console.error("Failed to execute SQLite search:", err);
+        throw new Error(
+          typeof err === "string" ? err : "Failed to execute search query",
+          { cause: err },
+        );
+      }
+    }
+
+    // Browser preview fallback search
+    const start = performance.now();
+    const notes = getBrowserFallbackNotes();
+    const qLower = trimmed.toLowerCase();
+    const tokens = qLower.split(/\s+/).filter(Boolean);
+
+    const filtered = notes.filter((n) => {
+      if (vault && vault.trim() && n.vault !== vault.trim()) return false;
+      const titleMatch = n.title.toLowerCase().includes(qLower);
+      const contentMatch = tokens.every((t) => n.content.toLowerCase().includes(t));
+      return titleMatch || contentMatch;
+    });
+
+    const results: SearchResult[] = filtered.map((n) => {
+      const titleLower = n.title.toLowerCase();
+      const titleMatches: SearchHighlight[] = [];
+      for (const t of tokens) {
+        let idx = 0;
+        while ((idx = titleLower.indexOf(t, idx)) !== -1) {
+          titleMatches.push({ start: idx, end: idx + t.length });
+          idx += t.length;
+        }
+      }
+
+      const snippets: SearchSnippet[] = [];
+      const contentLower = n.content.toLowerCase();
+      for (const t of tokens) {
+        const pos = contentLower.indexOf(t);
+        if (pos !== -1) {
+          const prefixStart = Math.max(0, pos - 35);
+          const suffixEnd = Math.min(n.content.length, pos + t.length + 35);
+          snippets.push({
+            prefix: (prefixStart > 0 ? "..." : "") + n.content.slice(prefixStart, pos).replace(/[\r\n]+/g, " "),
+            matched: n.content.slice(pos, pos + t.length),
+            suffix: n.content.slice(pos + t.length, suffixEnd).replace(/[\r\n]+/g, " ") + (suffixEnd < n.content.length ? "..." : ""),
+          });
+          if (snippets.length >= 2) break;
+        }
+      }
+
+      return {
+        id: n.id,
+        title: n.title,
+        folder: n.folder,
+        vault: n.vault || "Main Vault",
+        path: `${n.vault || "Main Vault"}/${n.title}.md`,
+        updatedAt: n.updatedAt,
+        score: titleLower === qLower ? 100 : titleLower.includes(qLower) ? 50 : 10,
+        titleMatches,
+        snippets,
+      };
+    });
+
+    results.sort((a, b) => b.score - a.score);
+    const paginated = results.slice(offset, offset + limit);
+
+    return {
+      results: paginated,
+      total: results.length,
+      tookMs: performance.now() - start,
+    };
+  },
+
+  /**
+   * Retrieves operational health and statistics of the SQLite search index.
+   */
+  async getIndexStats(): Promise<IndexStats> {
+    if (isTauri()) {
+      try {
+        return await invoke<IndexStats>("get_index_stats");
+      } catch (err) {
+        console.error("Failed to get index stats:", err);
+      }
+    }
+    const notes = getBrowserFallbackNotes();
+    return {
+      totalNotes: notes.length,
+      totalVaults: Array.from(new Set(notes.map((n) => n.vault).filter(Boolean))).length,
+      dbSizeBytes: 0,
+      lastSyncTime: new Date().toISOString(),
+      status: "ready",
+    };
+  },
+
+  /**
+   * Forces a complete re-scan and rebuild of the SQLite search index.
+   */
+  async reindexNotes(): Promise<RebuildSummary> {
+    if (isTauri()) {
+      try {
+        return await invoke<RebuildSummary>("reindex_notes");
+      } catch (err) {
+        console.error("Failed to reindex notes:", err);
+        throw new Error(typeof err === "string" ? err : "Failed to rebuild index", {
+          cause: err,
+        });
+      }
+    }
+    const notes = getBrowserFallbackNotes();
+    return {
+      totalIndexed: notes.length,
+      tookMs: 5,
+    };
   },
 };

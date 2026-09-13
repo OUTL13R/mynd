@@ -4,6 +4,7 @@ import { NotesProvider } from '../context/NotesContext';
 import { useNotes } from '../hooks/useNotes';
 import { ActivityBar } from '../features/activity-bar/ActivityBar';
 import { FileExplorer } from '../features/file-explorer/FileExplorer';
+import { SearchPanel } from '../features/search';
 import { EditorWorkspace } from '../features/editor/EditorWorkspace';
 import { AIView } from '../features/ai/AIView';
 import { StatusBar } from '../features/status-bar/StatusBar';
@@ -96,7 +97,23 @@ const AppInner: React.FC = () => {
     }, 800);
   };
 
-  const showSidebar = activeView === 'editor' && isSidebarOpen && activeTab === 'files';
+  // Global keyboard shortcut (Ctrl+Shift+F / Cmd+Shift+F) to open Search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        setActiveTab('search');
+        setActiveView('editor');
+        setSidebarOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const showFilesSidebar = activeView === 'editor' && isSidebarOpen && activeTab === 'files';
+  const showSearchSidebar = activeView === 'editor' && isSidebarOpen && activeTab === 'search';
+  const showAnySidebar = showFilesSidebar || showSearchSidebar;
 
   return (
     <div className={styles.shell}>
@@ -114,9 +131,10 @@ const AppInner: React.FC = () => {
 
         {activeView === 'editor' && (
           <>
-            {showSidebar && (
+            {showAnySidebar && (
               <>
-                <FileExplorer width={sidebarWidth} />
+                {showFilesSidebar && <FileExplorer width={sidebarWidth} />}
+                {showSearchSidebar && <SearchPanel width={sidebarWidth} />}
                 <div
                   className={styles.resizeHandle}
                   onMouseDown={startResize}

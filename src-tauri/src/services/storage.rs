@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use tauri::Manager;
 
 use crate::models::Note;
+use crate::services::FileIndex;
 
 pub struct StorageService;
 
@@ -394,6 +395,21 @@ impl StorageService {
 
         Self::write_note_to_path(&target_file, &normalized_note)?;
 
+        // Sync with SQLite IndexService immediately and register self-write suppression
+        if let Some(index) = app.try_state::<std::sync::Arc<crate::services::IndexService>>() {
+            if let Ok(metadata) = fs::metadata(&target_file) {
+                let mtime = metadata
+                    .modified()
+                    .ok()
+                    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                    .map(|d| d.as_millis() as u64)
+                    .unwrap_or(0);
+                let size = metadata.len();
+                index.record_self_write(&target_file, mtime, size);
+                let _ = index.upsert_file(&target_file, None);
+            }
+        }
+
         Ok(normalized_note)
     }
 
@@ -414,6 +430,11 @@ impl StorageService {
     /// Deletes a note file from system disk by note ID
     pub fn delete_note(app: &tauri::AppHandle, id: &str) -> Result<(), String> {
         let notes_dir = Self::get_notes_dir(app)?;
+
+        // Sync deletion with SQLite index
+        if let Some(index) = app.try_state::<std::sync::Arc<crate::services::IndexService>>() {
+            let _ = index.delete_note_by_id(id);
+        }
 
         if let Some(file_path) = Self::find_existing_file_by_id(&notes_dir, &notes_dir, id) {
             fs::remove_file(&file_path)
